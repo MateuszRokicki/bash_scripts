@@ -16,12 +16,12 @@ if file $1 | grep -q "CSV" || [[ "$1"==*.csv ]]; then
 	echo -e "File $1 is type of CSV. \n"
 else
 	echo -e "File $1 is not type of CSV. \n"
-	exit 2
+	exit 3
 fi
 
 if ! (head -2 $1 | grep -q ","); then
 	echo "Comma is not a delimiter of the file."
-	exit 3
+	exit 4
 fi
 
 file_size=$(ls -sh "$1" | awk '{print $1}')
@@ -45,12 +45,23 @@ tail -n +2 "$1" | head -n 5
 
 blank_lines=$(grep -c "^$" "$1")
 if [ $blank_lines -eq 1 ]; then
-	echo -e "There is $blank_lines blank line in the file.\n"
+	echo -e "\nThere is $blank_lines blank line in the file.\n"
 else if [ $blank_lines -gt 1 ]; then
-	echo -e "There are $blank_lines blank lines in the files.\n"
-	fi
+	echo -e "\nThere are $blank_lines blank lines in the files.\n"
+	else
+		echo
+	fi	
 fi
 
+ln=1
+grep -v '^$' "$1" | while read -r line; do
+	cols=$(( $(grep -o "," <<< "$line" | wc -l) +1 ))
+	if [ $cols -ne $i ]; then
+		echo "Wrong number of columns in line: $ln"
+		echo $line
+	else
+		ln=$((ln+1))
+	fi
+done
 
-
-echo "Done."
+echo -e "\nDone."
