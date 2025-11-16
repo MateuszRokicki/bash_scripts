@@ -6,6 +6,7 @@ echo -e "***Welcome to password generator***\n"
 
 options_menu(){
     re="^[0-9]+$"
+    pwd_chars="a-z"
 
     # Password length
     while true
@@ -39,10 +40,9 @@ options_menu(){
 
         case $uppercase in
             y|Y) 
-                uppercase=true
+                pwd_chars+="A-Z"
                 break;;
             n|N) 
-                uppercase=false
                 break;;
             *) echo -e "Inappropriate option. Choose again\n"
         esac
@@ -51,15 +51,14 @@ options_menu(){
     # Include/exclude numbers
     while true
     do
-        echo "Include numbers letters (y/n): "
+        echo "Include numbers (y/n): "
         read numbers;
 
         case $numbers in
             y|Y) 
-                numbers=true
+                pwd_chars+="0-9"
                 break;;
             n|N) 
-                numbers=false
                 break;;
             *) echo -e "Inappropriate option. Choose again\n"
         esac
@@ -68,23 +67,42 @@ options_menu(){
     # Include/exclude options
     while true
     do
-        echo "Include spec_char letters (y/n): "
+        echo "Include special characters (y/n): "
         read spec_char;
 
         case $spec_char in
             y|Y) 
-                spec_char=true
+                pwd_chars+='#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~'
                 break;;
             n|N) 
-                spec_char=false
                 break;;
             *) echo -e "Inappropriate option. Choose again\n"
         esac
     done
 }
 
-generate_password(){
-    echo "Generating password"
+generate_passwords(){
+    echo -e "\nGenerating passwords"
+    passwords=()
+    for ((i=0; i<$pass_num; i++)); do
+        passwords+=$(tr -dc $pwd_chars </dev/urandom | head -c $len)
+    done
+
+    while true
+    do
+        echo "Print passwords (y/n):"
+        read prt_pwd;
+
+        case $prt_pwd in
+            y|Y) 
+                echo "${passwords[@]}"
+                break;;
+            n|N) 
+                break;;
+            *) echo -e "Inappropriate option. Choose again\n"
+        esac
+    done
+    
 }
 
 while [ $finished -ne 1 ]
@@ -98,7 +116,7 @@ do
     case $option in
         1) 
             options_menu
-            generate_password;;
+            generate_passwords;;
         2) finished=1;;
         *) echo -e "Inappropriate option. Choose again\n"
     esac
