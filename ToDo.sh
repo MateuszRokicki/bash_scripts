@@ -31,15 +31,14 @@ list(){
     local param=$2
     echo $fun
     echo $param
-    if [[ $fun = "all" ]]; then
+    
+    if [[ -z $fun ]]; then
         awk -F '|' -v w="removed" '$4 != w' "$FILE"
     elif [[ $fun = "status" ]]; then
-        if ! [[ "all backlog pending completed" =~ (^|[[:space:]])$param($|[[:space:]]) ]]; then
+        if ! [[ "backlog pending completed" =~ (^|[[:space:]])$param($|[[:space:]]) ]]; then
             echo "Wrong status"
             echo "Usage: ToDo.sh list status backlog|pending|completed"
             exit 2
-        # elif [[ $param = "all" ]]; then
-        #     awk -F '|' -v w="$param" '$4 != w' "$FILE"
         else
             awk -F '|' -v w="$param" '$4 == w' "$FILE"
         fi
@@ -52,37 +51,42 @@ list(){
             awk -F '|' -v w="$param" '$3 == w' "$FILE"
         fi
     fi
-
-
-    # case $fun in
-    #     status)
-    #         echo 
-    #     priority)
-    #         echo;;
-
-    # awk -F '|' '$4 != "removed"' tasks.txt
 }
 
 status(){
     echo "status"
+    local id="$1"
+    local status="$2"
+
+    if awk -F '|' -v w="$id" '$1 == w { found=1; exit } END { exit !found }' "$FILE"; then
+        if ! [[ "backlog pending completed" =~ (^|[[:space:]])$status($|[[:space:]]) ]]; then
+            echo "Wrong status"
+            echo "Usage: ToDo.sh status <id> backlog|pending|completed"
+            exit 2
+        else
+            awk -F '|' -v w="$id" -v s="$status" 'BEGIN {OFS="|"} $1 == w {$4=s} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
+            echo "Task with ID $id updated to status $status"
+        fi
+    else
+        echo "Task with ID $id doesn't exist"
+    fi
 }
 
 remove(){
     echo "REMOVE"
+    local id="$1"
+
+
 }
 
-# while getopts "p:s:h" opt; do
-#     case $opt in
-#         p) priority="$OPTARG" ;;
-#         s) status="$OPTARG" ;;
-#         h) show_help; exit 0 ;;
-#     esac
-# done
 
 check_arguments(){
     local fun="$1"
     local num="$2"
     local num2="$3"
+    echo $SCRIPT_ARGS_LEN
+    echo $num
+    echo $num2
 
     if [[ $SCRIPT_ARGS_LEN -ne $num && $SCRIPT_ARGS_LEN -ne $num2 ]]; then
         case "$fun" in
@@ -115,12 +119,12 @@ case "$1" in
         add "$2" "$3"
         ;;
     list)
-        check_arguments "list" 3 0
+        check_arguments "list" 3 1
         list "$2" "$3"
         ;;
     status)
         check_arguments "status" 3
-        status "$2"
+        status "$2" "$3"
         ;;
     remove)
         check_arguments "remove" 2
