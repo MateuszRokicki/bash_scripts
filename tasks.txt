@@ -1,3 +1,5 @@
-1|"add dynamic ids"|high|backlog|2025-11-16 20:01:53|
-2|"list all tasks"|low|backlog|2025-11-16 20:02:41|
-3|"change status"|medium|backlog|2025-11-16 20:18:45|
+1|"add dynamic ids"|high|backlog|2025-12-16 07:51:33|2025-12-16 07:51:33
+2|"list all tasks"|low|removed|2025-12-16 07:51:33|
+3|"change status"|low|backlog|2025-12-16 07:51:33|2025-12-16 07:52:16
+4|"TEST FUNCTIONS"|high|"backlog"|2025-12-16 07:54:40|
+5|"low TEST FUNCTIONS"|medium|"backlog"|2025-12-16 07:55:17|

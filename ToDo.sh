@@ -7,7 +7,6 @@ FILE="tasks.txt"
 [[ ! -f "$FILE" ]] && touch "$FILE"
 
 add(){
-    echo "ADD"
     local task=$1
     local priority=$2
     local list="low medium high" 
@@ -26,11 +25,8 @@ add(){
 }
 
 list(){
-    echo "LIST"
     local fun=$1
     local param=$2
-    echo $fun
-    echo $param
     
     if [[ -z $fun ]]; then
         awk -F '|' -v w="removed" '$4 != w' "$FILE"
@@ -54,7 +50,6 @@ list(){
 }
 
 status(){
-    echo "status"
     local id="$1"
     local status="$2"
 
@@ -64,7 +59,7 @@ status(){
             echo "Usage: ToDo.sh status <id> backlog|pending|completed"
             exit 2
         else
-            awk -F '|' -v w="$id" -v s="$status" 'BEGIN {OFS="|"} $1 == w {$4=s} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
+            awk -F '|' -v w="$id" -v s="$status" -v t="$(date '+%Y-%m-%d %H:%M:%S')" 'BEGIN {OFS="|"} $1 == w {$4=s; $6=t} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
             echo "Task with ID $id updated to status $status"
         fi
     else
@@ -72,10 +67,33 @@ status(){
     fi
 }
 
+priority(){
+    local id="$1"
+    local priority="$2"
+
+    if awk -F '|' -v w="$id" '$1 == w { found=1; exit } END { exit !found }' "$FILE"; then
+        if ! [[ "low medium high" =~ (^|[[:space:]])$priority($|[[:space:]]) ]]; then
+            echo "Wrong priority"
+            echo "Usage: ToDo.sh priority <id> high|medium|low"
+            exit 2
+        else
+            awk -F '|' -v w="$id" -v p="$priority" -v t="$(date '+%Y-%m-%d %H:%M:%S')" 'BEGIN {OFS="|"} $1 == w {$3=p; $6=t} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
+            echo "Task with ID $id updated to priority $priority"
+        fi
+    else
+        echo "Task with ID $id doesn't exist"
+    fi
+}
+
 remove(){
-    echo "REMOVE"
     local id="$1"
 
+    if awk -F '|' -v w="$id" '$1 == w { found=1; exit } END { exit !found }' "$FILE"; then
+        awk -F '|' -v w="$id" 'BEGIN {OFS="|"} $1 == w -v t="$(date '+%Y-%m-%d %H:%M:%S')" {$4="removed"; $6=t} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
+        echo "Task with ID $id marked as removed"
+    else
+        echo "Task with ID $id doesn't exist"
+    fi
 
 }
 
@@ -84,9 +102,6 @@ check_arguments(){
     local fun="$1"
     local num="$2"
     local num2="$3"
-    echo $SCRIPT_ARGS_LEN
-    echo $num
-    echo $num2
 
     if [[ $SCRIPT_ARGS_LEN -ne $num && $SCRIPT_ARGS_LEN -ne $num2 ]]; then
         case "$fun" in
@@ -96,11 +111,15 @@ check_arguments(){
                 ;;
             list)
                 echo "Option list takes 0 or 2 arguments"
-                echo "Usage: ToDo.sh list or ToDo.sh list status all|backlog|pending|completed or ToDo.sh list priority low|medium|high"
+                echo "Usage: ToDo.sh list or ToDo.sh list status backlog|pending|completed or ToDo.sh list priority low|medium|high"
                 ;;
             status)
                 echo "Option status takes 3 argument"
-                echo "Usage: ToDo.sh status <task_id> <status?"
+                echo "Usage: ToDo.sh status <task_id> <status>"
+                ;;
+            priority)
+                echo "Option priority takes 3 argument"
+                echo "Usage: ToDo.sh priority <task_id> <priority>"
                 ;;
             remove)
                 echo "Option remove takes 1 argument"
@@ -125,6 +144,10 @@ case "$1" in
     status)
         check_arguments "status" 3
         status "$2" "$3"
+        ;;
+    priority)
+        check_arguments "priority" 3
+        priority "$2" "$3"
         ;;
     remove)
         check_arguments "remove" 2
