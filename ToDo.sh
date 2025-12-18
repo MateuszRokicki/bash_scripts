@@ -17,9 +17,12 @@ add(){
     fi
     
     local last_id=$(tail -n 1 "$FILE" | cut -d'|' -f1)
-        local next_id=$((last_id + 1))
-    
-    printf "%s|\"%s\"|%s|\"%s\"|%s|\n" "$next_id" "$task" "$priority" "backlog" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$FILE";
+        local next_id=$(( ${last_id:-0} + 1))
+
+    if [[ $next_id == 1 ]]; then
+        printf "id|task|priority|status|created|updated\n" >> "$FILE"
+
+    printf "%s|\"%s\"|%s|%s\|%s|%s\n" "$next_id" "$task" "$priority" "backlog" "$(date '+%Y-%m-%d %H:%M:%S')" "$(date '+%Y-%m-%d %H:%M:%S')" >> "$FILE";
 
     echo "Task $task added with id $next_id"
 }
@@ -44,7 +47,7 @@ list(){
             echo "Usage: ToDo.sh list priority low|medium|high"
             exit 2
         else
-            awk -F '|' -v w="$param" '$3 == w' "$FILE"
+            awk -F '|' -v w="$param" -v s="removed" '$3 == w && $4 != s' "$FILE"
         fi
     fi
 }
@@ -89,7 +92,7 @@ remove(){
     local id="$1"
 
     if awk -F '|' -v w="$id" '$1 == w { found=1; exit } END { exit !found }' "$FILE"; then
-        awk -F '|' -v w="$id" 'BEGIN {OFS="|"} $1 == w -v t="$(date '+%Y-%m-%d %H:%M:%S')" {$4="removed"; $6=t} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
+        awk -F '|' -v w="$id" -v t="$(date '+%Y-%m-%d %H:%M:%S')" 'BEGIN {OFS="|"} $1 == w {$4="removed"; $6=t} {print}'  "$FILE" > temp.txt && mv temp.txt "$FILE"
         echo "Task with ID $id marked as removed"
     else
         echo "Task with ID $id doesn't exist"
@@ -160,4 +163,4 @@ esac
 
 
 # file format
-# id|task|priority|status|created
+# id|task|priority|status|created|updated
